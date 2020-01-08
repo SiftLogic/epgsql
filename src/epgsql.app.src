@@ -5,4 +5,4 @@
              pgsql_idatetime, pgsql_sock, pgsql_types]},
   {registered, []},
   {applications, [kernel, stdlib, crypto, ssl, mochij]},
-  {included_applications, []}]}.
+  {included_applications, [gen_fsm_compat]}]}.
