@@ -114,7 +114,11 @@ i2time(N) ->
 
 time2i({H, M, S}) ->
     US = trunc(round(S * ?usecs_per_sec)),
-    ((H * ?mins_per_hour + M) * ?secs_per_minute) * ?usecs_per_sec + US.
+    ((H * ?mins_per_hour + M) * ?secs_per_minute) * ?usecs_per_sec + US;
+time2i({H, M, S0, Ms}) ->
+  S = erlang:list_to_float(lists:flatten(io_lib:format("~w.~w", [S0, Ms]))),
+  US = trunc(round(S * ?usecs_per_sec)),
+  ((H * ?mins_per_hour + M) * ?secs_per_minute) * ?usecs_per_sec + US.
 
 i2timestamp(N) ->
     case tmodulo(N, ?usecs_per_day) of
