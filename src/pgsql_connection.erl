@@ -76,9 +76,9 @@ sync(C) ->
 
 init([]) ->
     process_flag(trap_exit, true),
-    {M0, F0, A0} = application:get_env(epgsql, jsonb_decoder, {mochij2, decode, [{format, proplist}]}),
+    {M0, F0, A0} = application:get_env(epgsql, jsonb_decoder, {jsx, decode, [{return_maps, true}]}),
     put(jsonb_decoder, fun(V) -> M0:F0(V, A0) end),
-    {M1, F1, A1} = application:get_env(epgsql, json_decoder, {mochij2, decode, [{format, proplist}]}),
+    {M1, F1, A1} = application:get_env(epgsql, json_decoder, {jsx, decode, [{return_maps, true}]}),
     put(json_decoder, fun(V) -> M1:F1(V, A1) end),
     {ok, startup, #state{}}.
 
