@@ -117,8 +117,7 @@ json_encode(V) ->
     iolist_to_binary(json:encode(V)).
 
 json_decode(B) ->
-    {ok, V} = json:decode(B),
-    V.
+    json:decode(B).
 
 encode_array(Type, A) ->
     {Data, {NDims, Lengths}} = encode_array(Type, A, 0, []),
