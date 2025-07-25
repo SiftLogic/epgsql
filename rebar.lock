@@ -1,7 +1,7 @@
 {"1.2.0",
 [{<<"gen_fsm_compat">>,
   {git,"https://github.com/SiftLogic/gen_fsm_compat.git",
-       {ref,"dc5976180c5a80d676cc50e57775c96bf0ba119a"}},
+       {ref,"0e1608da1683f1900d57cb4493c335fb7c039394"}},
   0},
  {<<"jsx">>,{pkg,<<"jsx">>,<<"3.1.0">>},0}]}.
 [

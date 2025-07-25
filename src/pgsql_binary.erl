@@ -40,9 +40,9 @@ encode(varchar, B) when is_binary(B)        -> <<(byte_size(B)):?int32, B/binary
 encode(inet, B)                             -> encode(bytea, encode_net(B));
 encode(cidr, B)                             -> encode(bytea, encode_net(B));
 encode(json, B) when is_binary(B)           -> <<(byte_size(B)):?int32, B/binary>>;
-encode(json, B) when is_map(B)              -> encode(json, jsx:encode(B));
-encode(json, B) when is_list(B)             -> encode(json, jsx:encode(B));
-encode(jsonb, B) when is_map(B)             -> encode(jsonb, jsx:encode(B));
+encode(json, B) when is_map(B)              -> encode(json, json_encode(B));
+encode(json, B) when is_list(B)             -> encode(json, json_encode(B));
+encode(jsonb, B) when is_map(B)             -> encode(jsonb, json_encode(B));
 encode(jsonb, B) when is_binary(B)          -> <<(byte_size(B) + 1):?int32, ?JSONB_VER:8, B/binary>>;
 encode(boolarray, L) when is_list(L)        -> encode_array(bool, L);
 encode(cidrarray, L) when is_list(L)        -> encode_array(cidr, L);
@@ -109,9 +109,16 @@ decode(timestamptzarray, B)                 -> decode_array(B);
 decode(inet, B)                             -> decode_net(B);
 decode(cidr, B)                             -> decode_net(B);
 decode(uuid, B)                             -> decode_uuid(B);
-decode(json, B)                             -> (get(json_decoder))(B);
-decode(jsonb, <<?JSONB_VER:8, B/binary>>)   -> (get(json_decoder))(B);
+decode(json, B)                             -> json_decode(B);
+decode(jsonb, <<?JSONB_VER:8, B/binary>>)   -> json_decode(B);
 decode(_Other, Bin)                         -> Bin.
+
+json_encode(V) ->
+    iolist_to_binary(json:encode(V)).
+
+json_decode(B) ->
+    {ok, V} = json:decode(B),
+    V.
 
 encode_array(Type, A) ->
     {Data, {NDims, Lengths}} = encode_array(Type, A, 0, []),
