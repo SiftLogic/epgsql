@@ -124,17 +124,26 @@ json_encoder(Other, Encode) ->
 %% decoder: use custom functions to mirror the json_encoder function
 decoder_object_push(Key, <<_:4/binary, "-", _:2/binary, "-", _:2/binary, Sep:1/binary, _:2/binary, ":", _:2/binary, ":",
         _:2/binary, _TZData/binary>> = DateTimeBin, Acc) when Sep =:= <<" ">> orelse Sep =:= <<"T">> ->
-            Val = case qdate:to_date(DateTimeBin) of
+            try qdate:to_date(DateTimeBin) of
             {_, {_, _, _}} = Dt0 ->
-                Dt0;
+                [{Key, Dt0} | Acc];
             {D0, {H0, M0, S0, Ms}} ->
-                {D0, {H0, M0, S0 + (Ms / 1_000_000)}}
-            end,
-            [{Key, Val} | Acc];
+                [{Key, {D0, {H0, M0, S0 + (Ms / 1_000_000)}}} | Acc]
+            catch
+                E:M:St ->
+                  logger:error("Invalid datetime [~p]: ~p ~p", [Key, DateTimeBin, {E,M,St}]),
+                  [{Key, null} | Acc]
+            end;
 decoder_object_push(Key, <<_:4/binary, "-", _:2/binary, "-", _:2/binary>> = DateBin, Acc) ->
     %% date decoder
-    {Date, _} = qdate:to_date(DateBin),
-    [{Key, Date} | Acc];
+    try qdate:to_date(DateBin) of
+        {Date, _} ->
+            [{Key, Date} | Acc]
+    catch
+        E:M:St ->
+            logger:error("Invalid date [~p]: ~p ~p", [Key, DateBin, {E,M,St}]),
+            [{Key, null} | Acc]
+    end;
 decoder_object_push(Key, Val0, Acc) when is_binary(Val0) ->
     case chk_ip_or_cidr(Val0) of
         {true, IpOrCidr} ->
@@ -148,17 +157,26 @@ decoder_object_push(Key, Val0, Acc) ->
 
 decoder_array_push(<<_:4/binary, "-", _:2/binary, "-", _:2/binary, Sep:1/binary, _:2/binary, ":", _:2/binary, ":",
         _:2/binary, _TZData/binary>> = DateTimeBin, Acc) when Sep =:= <<" ">> orelse Sep =:= <<"T">> ->
-            Val = case qdate:to_date(DateTimeBin) of
-            {_, {_, _, _}} = Dt0 ->
-                Dt0;
-            {D0, {H0, M0, S0, Ms}} ->
-                {D0, {H0, M0, S0 + (Ms / 1_000_000)}}
-            end,
-            [Val | Acc];
+    try qdate:to_date(DateTimeBin) of
+        {_, {_, _, _}} = Dt0 ->
+            [Dt0 | Acc];
+        {D0, {H0, M0, S0, Ms}} ->
+            [{D0, {H0, M0, S0 + (Ms / 1_000_000)}} | Acc]
+    catch
+        E:M:St ->
+            logger:error("Invalid datetime in array: ~p ~p", [DateTimeBin, {E,M,St}]),
+            Acc
+    end;
 decoder_array_push(<<_:4/binary, "-", _:2/binary, "-", _:2/binary>> = DateBin, Acc) ->
     %% date decoder
-    {Date, _} = qdate:to_date(DateBin),
-    [Date | Acc];
+    try qdate:to_date(DateBin) of
+        {Date, _} ->
+            [Date | Acc]
+    catch
+        E:M:St ->
+            logger:error("Invalid date in array: ~p ~p", [DateBin, {E,M,St}]),
+            Acc
+    end;
 decoder_array_push(Val0, Acc) when is_binary(Val0) ->
     case chk_ip_or_cidr(Val0) of
         {true, IpOrCidr} ->
