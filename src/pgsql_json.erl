@@ -132,9 +132,17 @@ decoder_object_push(Key, <<_:4/binary, "-", _:2/binary, "-", _:2/binary, Sep:1/b
             catch
                 E:M:St ->
                   logger:error("Invalid datetime [~p]: ~p ~p", [Key, DateTimeBin, {E,M,St}]),
-                  [{Key, null} | Acc]
+                  [{Key, DateTimeBin} | Acc]
             end;
-decoder_object_push(Key, <<_:4/binary, "-", _:2/binary, "-", _:2/binary>> = DateBin, Acc) ->
+decoder_object_push(Key, <<Y1, Y2, Y3, Y4, "-", M1, M2, "-", D1, D2>> = DateBin, Acc) when
+    Y1 >= $0, Y1 =< $9,
+    Y2 >= $0, Y2 =< $9,
+    Y3 >= $0, Y3 =< $9,
+    Y4 >= $0, Y4 =< $9,
+    M1 >= $0, M1 =< $9,
+    M2 >= $0, M2 =< $9,
+    D1 >= $0, D1 =< $9,
+    D2 >= $0, D2 =< $9 ->
     %% date decoder
     try qdate:to_date(DateBin) of
         {Date, _} ->
@@ -142,7 +150,7 @@ decoder_object_push(Key, <<_:4/binary, "-", _:2/binary, "-", _:2/binary>> = Date
     catch
         E:M:St ->
             logger:error("Invalid date [~p]: ~p ~p", [Key, DateBin, {E,M,St}]),
-            [{Key, null} | Acc]
+            [{Key, DateBin} | Acc]
     end;
 decoder_object_push(Key, Val0, Acc) when is_binary(Val0) ->
     case chk_ip_or_cidr(Val0) of
@@ -167,7 +175,15 @@ decoder_array_push(<<_:4/binary, "-", _:2/binary, "-", _:2/binary, Sep:1/binary,
             logger:error("Invalid datetime in array: ~p ~p", [DateTimeBin, {E,M,St}]),
             Acc
     end;
-decoder_array_push(<<_:4/binary, "-", _:2/binary, "-", _:2/binary>> = DateBin, Acc) ->
+decoder_array_push(<<Y1, Y2, Y3, Y4, "-", M1, M2, "-", D1, D2>> = DateBin, Acc) when
+    Y1 >= $0, Y1 =< $9,
+    Y2 >= $0, Y2 =< $9,
+    Y3 >= $0, Y3 =< $9,
+    Y4 >= $0, Y4 =< $9,
+    M1 >= $0, M1 =< $9,
+    M2 >= $0, M2 =< $9,
+    D1 >= $0, D1 =< $9,
+    D2 >= $0, D2 =< $9 ->
     %% date decoder
     try qdate:to_date(DateBin) of
         {Date, _} ->
